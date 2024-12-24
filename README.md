@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Maze Solver Application
 
 ## Overview
@@ -16,17 +17,15 @@ The Maze Solver is a web-based application designed to upload a maze image and v
 - **CSS3**: For styling, including animations, glassmorphism, and responsive design.
 - **JavaScript**: For interactive features and dynamic content handling.
 
-### Backend (Optional):
-- **Python (Flask/Django)**: For processing the maze image and generating the solution (if implemented).
-- **AI/ML Algorithms**: For maze-solving logic (if applicable).
-
-
+### Backend:
+- **Python (Flask/Django)**: For processing the maze image and generating the solution.
+- **AI Algorithms**: Includes A* (A-star) algorithm for maze-solving logic.
 
 ## How to Use
 1. Clone the repository:
    ```bash
    git clone https://github.com/your-repo/maze-solver.git
-   ```
+
 2. Navigate to the project directory:
    ```bash
    cd maze-solver
@@ -59,3 +58,7 @@ The design reflects the theme of **Convergence**, symbolizing the intersection o
 
 ## License
 This project is licensed under the MIT License. See the LICENSE file for details.
+=======
+# Maze-Solver
+Maze Solving using A star algorithm 
+>>>>>>> origin/main
