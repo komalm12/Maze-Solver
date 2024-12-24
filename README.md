@@ -29,13 +29,16 @@ The Maze Solver is a web-based application designed to upload a maze image and v
 2. Navigate to the project directory:
    ```bash
    cd maze-solver
-  
-3. Run Command: python -m venv venv to create virtual environment
 
-   then activate the virtual Environment by venv/Scripts/activate
+3.Create and activate a virtual environment:
+   ```bash
+python -m venv venv
+source venv/bin/activate   # On Windows: venv\Scripts\activate
+```
+4. Run the application:
+   ```bash
+   python app.py
 
-   then run Python app.py On terminal
- 
 5. Upload a maze image and click "Solve Maze" to view the solution.
 
 ## Design Highlights
