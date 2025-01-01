@@ -1,118 +1,166 @@
-// Wait for the DOM to fully load before attaching event listeners
-document.addEventListener("DOMContentLoaded", () => {
-    const mazeForm = document.getElementById("mazeForm");
-    const status = document.getElementById("status");
-    const mazeGif = document.getElementById("mazeGif");
-    const fileInput = document.getElementById("mazeImage");
-    const imagePreviewContainer = document.createElement("div");
-    const imagePreview = document.createElement("img");
-    const previewTitle = document.createElement("h3");
-    const downloadButton = document.createElement("a");
-    
-    // Check if all necessary elements exist
-    if (!mazeForm || !status || !mazeGif || !fileInput) {
-        console.error("One or more required elements are missing in the DOM.");
-        return;
+document.addEventListener('DOMContentLoaded', function() {
+    // Elements
+    const mazeForm = document.getElementById('mazeForm');
+    const fileInput = document.getElementById('mazeImage');
+    const imagePreview = document.getElementById('imagePreview');
+    const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+    const status = document.getElementById('status');
+    const mazeGif = document.getElementById('mazeGif');
+    const mazeGifContainer = document.getElementById('mazeGifContainer');
+    const downloadButton = document.getElementById('downloadGifButton');
+
+    // Hide elements initially
+    imagePreviewContainer.style.display = 'none';
+    mazeGifContainer.style.display = 'none';
+    downloadButton.style.display = 'none';
+
+    // File validation
+    const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/bmp'];
+    const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+
+    function validateFile(file) {
+        if (!file) {
+            throw new Error('Please select a file');
+        }
+        if (!ALLOWED_TYPES.includes(file.type)) {
+            throw new Error('Please upload an image file (JPEG, PNG, GIF, or BMP)');
+        }
+        if (file.size > MAX_SIZE) {
+            throw new Error('File size must be less than 5MB');
+        }
+        return true;
     }
 
-    // Add the image preview container to the DOM
-    imagePreviewContainer.id = "imagePreviewContainer";
-    previewTitle.textContent = "Uploaded Maze Preview:";
-    previewTitle.style.display = "none"; // Initially hidden
-    imagePreview.id = "imagePreview";
-    imagePreview.style.display = "none"; // Initially hidden
-    imagePreviewContainer.appendChild(previewTitle);
-    imagePreviewContainer.appendChild(imagePreview);
-    mazeForm.parentNode.insertBefore(imagePreviewContainer, mazeForm.nextSibling);
-
-    // Configure the download button
-    downloadButton.id = "downloadGifButton";
-    downloadButton.textContent = "Download GIF";
-    downloadButton.style.display = "none"; // Initially hidden
-    downloadButton.style.marginTop = "20px";
-    downloadButton.style.padding = "12px 25px";
-    downloadButton.style.background = "linear-gradient(to right, #08f1de, hsl(172, 98%, 21%))";
-    downloadButton.style.color = "#ffffff";
-    downloadButton.style.fontSize = "1rem";
-    downloadButton.style.fontWeight = "bold";
-    downloadButton.style.textDecoration = "none";
-    downloadButton.style.borderRadius = "20px";
-    downloadButton.style.boxShadow = "0 5px 15px rgba(0, 0, 0, 0.2)";
-    mazeForm.parentNode.insertBefore(downloadButton, imagePreviewContainer.nextSibling);
-
-    // Add an input change listener to preview the uploaded image
-    fileInput.addEventListener("change", () => {
-        const file = fileInput.files[0];
-        if (file) {
-            const reader = new FileReader();
-
-            reader.onload = (event) => {
-                imagePreview.src = event.target.result; // Set the image preview source
-                imagePreview.style.display = "block";
-                previewTitle.style.display = "block";
-            };
-
-            reader.readAsDataURL(file); // Read the uploaded file as a data URL
-        } else {
-            imagePreview.style.display = "none";
-            previewTitle.style.display = "none";
-        }
-    });
-
-    // Add a submit event listener to the form
-    mazeForm.addEventListener("submit", async (event) => {
-        event.preventDefault();
-
-        // Show processing status
-        status.textContent = "Processing... Please wait.";
-        mazeGif.style.display = "none";
-        mazeGif.src = ""; // Clear the previous GIF
-        downloadButton.style.display = "none"; // Hide the download button
-        downloadButton.href = ""; // Clear the download link
-
-        // Prepare form data
-        const formData = new FormData();
-        const file = fileInput.files[0];
-
-        if (!file) {
-            status.textContent = "Please upload a maze image.";
-            return;
-        }
-
-        formData.append("mazeImage", file);
-
+    // File input change handler
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        
         try {
-            // Send data to the server
-            const response = await fetch("/solve_maze", {
-                method: "POST",
-                body: formData,
-            });
-
-            // Handle server response
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || "Failed to process maze");
-            }
-
-            const result = await response.json();
-
-            // Update UI with the result
-            if (result.gifUrl) {
-                status.textContent = "Maze solved! See the animation below.";
-                mazeGif.src = result.gifUrl; // Set the correct URL for the GIF
-                mazeGif.style.display = "block";
-
-                // Configure the download button
-                downloadButton.href = result.gifUrl;
-                downloadButton.download = "solved_maze.gif"; // Set the filename for download
-                downloadButton.style.display = "inline-block"; // Show the download button
-            } else {
-                throw new Error("No GIF URL returned by the server.");
+            if (validateFile(file)) {
+                // Preview image
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    imagePreview.src = e.target.result;
+                    imagePreviewContainer.style.display = 'block';
+                    status.textContent = 'Image loaded successfully. Click "Solve Maze" to begin.';
+                    status.className = 'status-info';
+                };
+                reader.readAsDataURL(file);
             }
         } catch (error) {
-            // Handle errors
-            console.error("Error:", error);
-            status.textContent = `Error: ${error.message}`;
+            status.textContent = error.message;
+            status.className = 'status-error';
+            imagePreviewContainer.style.display = 'none';
         }
     });
+
+    // Form submission
+    mazeForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const file = fileInput.files[0];
+        
+        try {
+            validateFile(file);
+            
+            // Update UI for processing
+            status.textContent = 'Processing maze...';
+            status.className = 'status-processing';
+            mazeGifContainer.style.display = 'none';
+            downloadButton.style.display = 'none';
+            
+            // Create loading spinner
+            const spinner = document.createElement('div');
+            spinner.className = 'loading-spinner';
+            status.appendChild(spinner);
+
+            // Prepare form data
+            const formData = new FormData();
+            formData.append('mazeImage', file);
+
+            // Send request
+            const response = await fetch('/solve_maze', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // Update UI for success
+                status.textContent = 'Maze solved successfully!';
+                status.className = 'status-success';
+                
+                // Display solution
+                mazeGif.src = data.gifUrl;
+                mazeGifContainer.style.display = 'block';
+                
+                // Setup download button
+                downloadButton.href = data.gifUrl;
+                downloadButton.style.display = 'inline-block';
+                
+                // Add solution stats if available
+                if (data.stats) {
+                    const statsHtml = `
+                        <div class="solution-stats">
+                            <p>Path Length: ${data.stats.pathLength}</p>
+                            <p>Cells Explored: ${data.stats.exploredCells}</p>
+                            <p>Processing Time: ${data.stats.processingTime.toFixed(2)}s</p>
+                        </div>
+                    `;
+                    status.insertAdjacentHTML('beforeend', statsHtml);
+                }
+            } else {
+                throw new Error(data.error || 'Failed to solve maze');
+            }
+        } catch (error) {
+            status.textContent = `Error: ${error.message}`;
+            status.className = 'status-error';
+            mazeGifContainer.style.display = 'none';
+            downloadButton.style.display = 'none';
+        } finally {
+            // Remove loading spinner if it exists
+            const spinner = status.querySelector('.loading-spinner');
+            if (spinner) {
+                spinner.remove();
+            }
+        }
+    });
+
+    // Add drag and drop support
+    const dropZone = document.querySelector('.upload-section');
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, highlight, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, unhighlight, false);
+    });
+
+    function highlight(e) {
+        dropZone.classList.add('highlight');
+    }
+
+    function unhighlight(e) {
+        dropZone.classList.remove('highlight');
+    }
+
+    dropZone.addEventListener('drop', handleDrop, false);
+
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const file = dt.files[0];
+        fileInput.files = dt.files;
+        fileInput.dispatchEvent(new Event('change'));
+    }
 });
